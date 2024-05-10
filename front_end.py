@@ -5,9 +5,10 @@ import nltk
 from nltk.tokenize import word_tokenize
 import mysql.connector
 from mysql.connector import Error
+import boto3
 
-# Ensure nltk resources are downloaded
-nltk.download('punkt')
+# Initialize clients
+s3 = boto3.client('s3')
 
 # Database connection configuration
 config = {
@@ -33,14 +34,22 @@ def personality_detection(text):
     return result
 
 
-# Define the PDF to tokens function
-def pdf_to_tokens(pdf_file):
+# Define the PDF to tokens function & save the text to S3
+def pdf_to_tokens(pdf_file, book_name):
     reader = PyPDF2.PdfReader(pdf_file)
     num_pages = len(reader.pages)
     all_text = ''
     for page_num in range(num_pages):
         page = reader.pages[page_num]
         all_text += page.extract_text() + ' '
+
+    # save the text to S3
+    s3.put_object(
+        Bucket='autobiography-raw-data',
+        Key=book_name,
+        Body=all_text
+    )
+
     tokens = word_tokenize(all_text)
     chunks = [' '.join(tokens[i:i + 1000]) for i in range(0, len(tokens), 1000)]
     return chunks
@@ -107,7 +116,7 @@ if person_name and book_name:
     else:
         uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
         if uploaded_file is not None:
-            chunks = pdf_to_tokens(uploaded_file)
+            chunks = pdf_to_tokens(uploaded_file, book_name)
             results = []
             for chunk in chunks:
                 results.append(personality_detection(chunk))
