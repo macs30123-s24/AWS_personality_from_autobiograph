@@ -30,6 +30,18 @@ def pdf_to_tokens(pdf_file):
     chunks = [' '.join(tokens[i:i + 1000]) for i in range(0, len(tokens), 1000)]
     return chunks
 
+def txt_to_tokens(txt_path):
+    with open(txt_path, 'r') as file:
+        text = file.read()
+
+    # Tokenize the text
+    tokens = word_tokenize(text)
+
+    # Split the tokens into chunks of 1000 tokens each
+    chunks = [' '.join(tokens[i:i + 1000]) for i in range(0, len(tokens), 1000)]
+
+    return chunks
+
 # Streamlit app interface
 st.title('Personality Detection from Autobiographies')
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
