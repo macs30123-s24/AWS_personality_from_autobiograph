@@ -1,4 +1,7 @@
 import os
+import boto3
+
+s3 = boto3.client('s3')
 
 def rewrite_aws_credentials(local_file_path, aws_credentials_path):
     try:
