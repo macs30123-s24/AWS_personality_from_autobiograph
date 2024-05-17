@@ -71,3 +71,10 @@ def lambda_handler(event, context):
   "chunks": ["test1" , "test2"]
 }
 '''  
+if __name__ == '__main__':
+    event = {
+        "chunks": ["test1", "test2"]
+    }
+    results = lambda_handler(event, None)
+    print(results)
+    print("Done!") 
