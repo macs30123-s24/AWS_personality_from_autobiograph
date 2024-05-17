@@ -6,6 +6,10 @@ from nltk.tokenize import word_tokenize
 import mysql.connector
 from mysql.connector import Error
 import boto3
+import subprocess
+import json
+from numba import njit
+import numpy as np
 
 # Initialize clients
 s3 = boto3.client('s3')
@@ -14,11 +18,12 @@ s3 = boto3.client('s3')
 config = {
     'user': 'username',
     'password': 'password',
-    'host': 'autobiography-db.cfgznmmh4qfo.us-east-1.rds.amazonaws.com',
+    'host': 'autobiography-db.cvb2z3vt9fut.us-east-1.rds.amazonaws.com',
     'database': 'autobiography',
     'raise_on_warnings': True
 }
 
+# nltk.download('punkt')
 
 # Define the personality detection function
 def personality_detection(text):
@@ -43,7 +48,7 @@ def pdf_to_tokens(pdf_file, book_name):
         page = reader.pages[page_num]
         all_text += page.extract_text() + ' '
 
-    # save the text to S3
+    # Save the text to S3
     s3.put_object(
         Bucket='autobiography-raw-data',
         Key=book_name,
@@ -98,12 +103,22 @@ def insert_into_database(person_name, book_name, scores):
         st.error(f"Failed to insert data into database: {e}")
 
 
+# Define the compute_averages function
+def compute_averages(results):
+    sums = {trait: 0 for trait in results[0]}
+    for person in results:
+        for trait in person:
+            sums[trait] += person[trait]
+    averages = {trait: sum_val / len(results) for trait, sum_val in
+                sums.items()}
+    return averages
+
 # Streamlit app interface
 st.title('Personality Detection from Autobiographies')
 
 # Text input for person name and book name
-person_name = st.text_input("Enter the person's name")
-book_name = st.text_input("Enter the book's name")
+person_name = st.text_input("Enter the person's name").lower()
+book_name = st.text_input("Enter the book's name").lower()
 
 if person_name and book_name:
     db_result = check_database(person_name, book_name)
@@ -116,19 +131,22 @@ if person_name and book_name:
     else:
         uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
         if uploaded_file is not None:
-            chunks = pdf_to_tokens(uploaded_file, book_name)
+            # Use session state to manage the state of the uploaded file
+            if 'uploaded_file' not in st.session_state:
+                st.session_state.uploaded_file = uploaded_file
+                chunks = pdf_to_tokens(uploaded_file, book_name)
+                st.session_state.chunks = chunks
+            else:
+                chunks = st.session_state.chunks
+
             results = []
             for chunk in chunks:
                 results.append(personality_detection(chunk))
 
             # Sum and average the results
             if results:
-                sums = {trait: 0 for trait in results[0]}
-                for person in results:
-                    for trait in person:
-                        sums[trait] += person[trait]
-                averages = {trait: sum_val / len(results) for trait, sum_val in
-                            sums.items()}
+                # averages = compute_averages(results)
+                averages = compute_averages(results)
                 st.write("Computed Personality Scores:")
                 st.json(averages)
                 # Insert results into the database
