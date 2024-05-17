@@ -80,18 +80,33 @@ def insert_into_database(person_name, book_name, scores):
     try:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
-        # Insert into persons table
+
+        # Insert into persons table with alias for ON DUPLICATE KEY UPDATE
         cursor.execute("""
-            INSERT INTO persons (person_name, Extroversion, Neuroticism, Agreeableness, Conscientiousness, Openness, book_title) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO persons (person_name, Extroversion, Neuroticism, Agreeableness, Conscientiousness, Openness, book_title)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) AS new_vals
+            ON DUPLICATE KEY UPDATE
+                Extroversion=new_vals.Extroversion,
+                Neuroticism=new_vals.Neuroticism,
+                Agreeableness=new_vals.Agreeableness,
+                Conscientiousness=new_vals.Conscientiousness,
+                Openness=new_vals.Openness,
+                book_title=new_vals.book_title
             """, (person_name, scores['Extroversion'], scores['Neuroticism'],
                   scores['Agreeableness'], scores['Conscientiousness'],
                   scores['Openness'], book_name))
 
-        # Insert into books table
+        # Insert into books table with alias for ON DUPLICATE KEY UPDATE
         cursor.execute("""
-            INSERT INTO books (book_title, Extroversion, Neuroticism, Agreeableness, Conscientiousness, Openness, person_name) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO books (book_title, Extroversion, Neuroticism, Agreeableness, Conscientiousness, Openness, person_name)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) AS new_vals
+            ON DUPLICATE KEY UPDATE
+                Extroversion=new_vals.Extroversion,
+                Neuroticism=new_vals.Neuroticism,
+                Agreeableness=new_vals.Agreeableness,
+                Conscientiousness=new_vals.Conscientiousness,
+                Openness=new_vals.Openness,
+                person_name=new_vals.person_name
             """, (book_name, scores['Extroversion'], scores['Neuroticism'],
                   scores['Agreeableness'], scores['Conscientiousness'],
                   scores['Openness'], person_name))
@@ -145,7 +160,6 @@ if person_name and book_name:
 
             # Sum and average the results
             if results:
-                # averages = compute_averages(results)
                 averages = compute_averages(results)
                 st.write("Computed Personality Scores:")
                 st.json(averages)
