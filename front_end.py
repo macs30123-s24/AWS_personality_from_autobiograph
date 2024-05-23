@@ -9,15 +9,15 @@ import mysql.connector
 from mysql.connector import Error
 import boto3
 import logging
-import os
-import numpy as np
-from numba import njit
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
 # Initialize clients
-s3 = boto3.client('s3')
+s3 = boto3.client('s3',
+    aws_access_key_id='ASIA2ZI247HFDDGW7UWM',
+    aws_secret_access_key='wO2znPY02CTb11c2vS9D13H+otD1Q2MV3fT0aVpX',
+    region_name='us-east-1')
 
 # Database connection configuration using environment variables
 config = {
@@ -119,9 +119,6 @@ def insert_into_database(person_name, book_name, scores):
     try:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
-
-        # Print the parameters to debug
-        print("Inserting into persons table:", person_name, book_name, scores)
 
         # Insert into persons table with alias for ON DUPLICATE KEY UPDATE
         cursor.execute("""
