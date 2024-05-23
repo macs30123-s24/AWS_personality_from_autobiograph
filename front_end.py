@@ -8,6 +8,10 @@ import mysql.connector
 import boto3
 import logging
 import json
+import time
+import math
+import logging
+from datetime import datetime
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -83,22 +87,60 @@ def document_to_tokens(file, file_extension, book_name):
 
 
 # Define the personality detection function using AWS Lambda
-def personality_detection(chunks):
-    payload = json.dumps({"chunks": chunks})
-    response = lambda_client.invoke(
-        FunctionName='backend_personality',
-        InvocationType='RequestResponse',
-        Payload=payload
-    )
-    response_payload = json.loads(response['Payload'].read())
+logging.basicConfig(level=logging.INFO)
 
-    if response_payload['statusCode'] == 200:
-        return json.loads(response_payload[
-                              'body'])  # Adjust based on actual Lambda response structure
+def personality_detection(chunks):
+    # Ensure the chunks are divided into 10 portions
+    # chunk_size = math.ceil(len(chunks) / 10)
+    # chunked_chunks = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
+
+    def divide_payloads(url_list, chunks):
+        chunk_size = (len(url_list) + chunks - 1) // chunks
+        return [{'chunks': url_list[i * chunk_size:(i + 1) * chunk_size]} for i in
+                range(chunks)]
+
+    chunked_chunks = divide_payloads(chunks, 10)
+
+    # Log the chunked_chunks for debugging
+    # logging.info(f"Chunked chunks: {chunked_chunks}")
+
+    sfn = boto3.client('stepfunctions')
+    response = sfn.list_state_machines()
+    state_machine_arn = [sm['stateMachineArn'] for sm in response['stateMachines'] if sm['name'] == 'personalities-state-machine'][0]
+
+    # Prepare input payload for Step Functions state machine
+    input_payload = chunked_chunks
+
+    # Log the input payload for debugging
+    # logging.info(f"Input payload: {json.dumps(input_payload, indent=2)}")
+
+    # Start synchronous execution for Express Workflow
+    try:
+        start_response = sfn.start_sync_execution(
+            stateMachineArn=state_machine_arn,
+            name=f'q2_sync_execution_{int(time.time())}',
+            input=json.dumps(input_payload)
+        )
+    except Exception as e:
+        logging.error(f"Error starting execution: {e}")
+        raise
+
+    # Convert datetime objects to strings for logging
+    def convert_datetime(obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError("Type not serializable")
+
+    # logging.info(f"Start response: {json.dumps(start_response, default=convert_datetime, indent=2)}")
+
+    # Check for the output
+    if start_response['status'] == 'SUCCEEDED':
+        output = json.loads(start_response['output'])
+        # logging.info(f"Execution output: {json.dumps(output, indent=2)}")
+        return output
     else:
-        st.error(
-            f"Lambda function failed with status code: {response_payload['statusCode']}")
-        return None
+        logging.error(f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
+        raise Exception(f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
 
 
 def check_database(person_name, book_name):
@@ -162,10 +204,13 @@ def insert_into_database(person_name, book_name, scores):
         st.error(f"Failed to insert data into database: {e}")
 
 def compute_averages(results):
+    results = [entry for item in results for entry in
+                        json.loads(item['body'])]
+
     sums = {trait: 0 for trait in results[0]}
     for person in results:
         for trait in person:
-            sums[trait] += person[trait]
+            sums[trait] += float(person[trait])
     averages = {trait: sum_val / len(results) for trait, sum_val in
                 sums.items()}
     return averages
