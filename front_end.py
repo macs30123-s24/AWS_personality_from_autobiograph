@@ -1,10 +1,12 @@
 import json
 import time
 from datetime import datetime
+
 import PyPDF2
 import boto3
 import mysql.connector
 import nltk
+import requests
 import streamlit as st
 from bs4 import BeautifulSoup
 from ebooklib import epub
@@ -13,8 +15,21 @@ from nltk.tokenize import word_tokenize
 session = boto3.Session(
     aws_access_key_id='ASIA2ZI247HFF4QQZINB',
     aws_secret_access_key='K0BzzRTwMjUfSgjOFjkjeTn3tzoY2stLLLjL23wz',
-    region_name='us-east-1'
-)
+    region_name='us-east-1',
+    aws_session_token='IQoJb3JpZ2luX2VjEPP//////////wEaCXVzLXdlc3QtMiJHMEUCIQDRo'
+                      'iSqmOQbd4Q/BchaqbjqHS94Ey3E9JLIdwgg96m+nQIgPbBPY4Q02dMad/'
+                      '2VlGO5EUiWGRx4VAQffJCK8egbdswqpwIIbBAAGgw3NDE0NzUxNTQzNzg'
+                      'iDOVW8gKZ6PU6OxsmZiqEAtME5GqvwCkNWrEMAvLzss2rJB9EV5Fcl9Bn'
+                      'iC0mnhIwJt9rCKmV+qUUAVH+SIAthwBX0zAyJeQtlr/rNYwOWkOF0+734'
+                      'ZRYF80nt3I6/pLVpv0DrdJVbfGz74mkWC/OFKpO4vSWfC19Ar3FtH3BJw'
+                      'm4GY6kjJKddcB64K+5Ja17AV1NnKtwXBp4QXAwrDrrPtqw26K7AuB+5Z6'
+                      'tqc8ubHLjT+Q9BlEguZbtTKp30YbG1sX4wcH35/wubQ3KlZfoU203eQbC'
+                      'ycPu6P8cubr1pu3U0mHf0PwiKJCet8Hb5hpABSZfhOH3kEIYvxh/JcL10'
+                      'yvHWUPlinI0xcKjpMU4mSIR/dxgMLjlurIGOp0B7wFa9NDITW6jhjiFmd'
+                      'P43EXIUhMuQExSP6SYQEGM8i5s/Dj+DgqcdkyqGdHvdnDlUF5MEGhewqC'
+                      'cwsS0hk/1iKaVG0gOx9xs6m31XwhBAH0sozboeFTsqQ7zon75lsefm5pu'
+                      'CB+RAbwkqK1uUNpXqQAyXIe4FE6+NDCkD0x7XguOkU9sZ9B1ZoWvXHyuO'
+                      '3yMq/i++zK0EdbAinulOw==')
 
 s3 = session.client('s3')
 
@@ -31,6 +46,7 @@ config = {
 
 # Download the punkt tokenizer
 nltk.download('punkt')
+
 
 # Function to read PDF
 def read_pdf(file):
@@ -61,13 +77,29 @@ def read_epub(file):
 
 
 # Function to convert text to tokens and save to S3
+# Function to convert text to tokens and save to S3 using presigned POST URL
 def text_to_tokens(text, book_name):
-    # Save the text to S3
-    s3.put_object(
+    # Generate a presigned POST URL
+    response = s3.generate_presigned_post(
         Bucket='autobiography-raw-data',
         Key=book_name,
-        Body=text
+        Fields=None,
+        Conditions=None,
+        ExpiresIn=3600
     )
+
+    presigned_url = response['url']
+    fields = response['fields']
+
+    # Upload the text to S3 using the presigned URL
+    files = {'file': (book_name, text)}
+    http_response = requests.post(presigned_url, data=fields, files=files)
+
+    if http_response.status_code == 204:
+        print('File successfully uploaded to S3 using presigned URL')
+    else:
+        print('Failed to upload file to S3 using presigned URL')
+        print(http_response.text)
 
     tokens = word_tokenize(text)
     chunks = [' '.join(tokens[i:i + 1000]) for i in range(0, len(tokens), 1000)]
@@ -96,11 +128,11 @@ def personality_detection(chunks):
 
     chunked_chunks = divide_payloads(chunks, 10)
 
-    sfn = boto3.client('stepfunctions')
+    sfn = session.client('stepfunctions')
     response = sfn.list_state_machines()
     state_machine_arn = \
-    [sm['stateMachineArn'] for sm in response['stateMachines'] if
-     sm['name'] == 'personalities-state-machine'][0]
+        [sm['stateMachineArn'] for sm in response['stateMachines'] if
+         sm['name'] == 'personalities-state-machine'][0]
 
     # Prepare input payload for Step Functions state machine
     input_payload = chunked_chunks
