@@ -1,23 +1,20 @@
 import nltk
 import streamlit as st
-from transformers import BertTokenizer, BertForSequenceClassification
 import PyPDF2
 from ebooklib import epub
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
 import mysql.connector
-from mysql.connector import Error
 import boto3
 import logging
+import json
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
 # Initialize clients
-s3 = boto3.client('s3',
-    aws_access_key_id='ASIA2ZI247HFDDGW7UWM',
-    aws_secret_access_key='wO2znPY02CTb11c2vS9D13H+otD1Q2MV3fT0aVpX',
-    region_name='us-east-1')
+s3 = boto3.client('s3')
+lambda_client = boto3.client('lambda')
 
 # Database connection configuration using environment variables
 config = {
@@ -85,18 +82,23 @@ def document_to_tokens(file, file_extension, book_name):
     return text_to_tokens(text, book_name)
 
 
-# Define the personality detection function
-def personality_detection(text):
-    tokenizer = BertTokenizer.from_pretrained("Minej/bert-base-personality")
-    model = BertForSequenceClassification.from_pretrained(
-        "Minej/bert-base-personality")
-    inputs = tokenizer(text, truncation=True, padding=True, return_tensors="pt")
-    outputs = model(**inputs)
-    predictions = outputs.logits.squeeze().detach().numpy()
-    label_names = ['Extroversion', 'Neuroticism', 'Agreeableness',
-                   'Conscientiousness', 'Openness']
-    result = {label_names[i]: predictions[i] for i in range(len(label_names))}
-    return result
+# Define the personality detection function using AWS Lambda
+def personality_detection(chunks):
+    payload = json.dumps({"chunks": chunks})
+    response = lambda_client.invoke(
+        FunctionName='backend_personality',
+        InvocationType='RequestResponse',
+        Payload=payload
+    )
+    response_payload = json.loads(response['Payload'].read())
+
+    if response_payload['statusCode'] == 200:
+        return json.loads(response_payload[
+                              'body'])  # Adjust based on actual Lambda response structure
+    else:
+        st.error(
+            f"Lambda function failed with status code: {response_payload['statusCode']}")
+        return None
 
 
 def check_database(person_name, book_name):
@@ -200,13 +202,16 @@ if person_name and book_name:
             else:
                 chunks = st.session_state.chunks
 
-            results = []
-            for chunk in chunks:
-                results.append(personality_detection(chunk))
+            results = personality_detection(chunks)
 
             # Sum and average the results
             if results:
-                averages = compute_averages(results)
+                print(results)
+                # if results is a json object
+                if isinstance(results, dict):
+                    averages = results
+                else:
+                    averages = compute_averages(results)
                 st.write("Computed Personality Scores:")
                 st.json(averages)
                 # Insert results into the database
