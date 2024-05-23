@@ -1,73 +1,55 @@
-''' This function takes in a list of strings and returns a list of dictionaries'''
+''' Lambda Function that uses the EC2 Backend Service '''
 
-print("Loading modules...")
-from transformers import BertTokenizer, BertForSequenceClassification
-import numpy as np
-import boto3
-import os
-# Ensure nltk resources are downloaded
-print("Loaded modules!")
-s3_client = boto3.client('s3')
-s3_resource = boto3.resource('s3')
-bucket_name = 'macs123-deployment'
-prefix = 'personality_tokenizer/'
-
-# Specify the local directory to save the downloaded files
-local_dir = '/tmp/personality_tokenizer/'
-
-# Create the local directory if it doesn't exist
-os.makedirs(local_dir, exist_ok=True)
-bucket_resource = s3_resource.Bucket(bucket_name)
-objects_under_prefix = bucket_resource.objects.filter(Prefix=prefix)
-tokenizer_dir = '/tmp/personality_tokenizer/'
-
-# Load the tokenizer from the downloaded files
-tokenizer = BertTokenizer.from_pretrained(tokenizer_dir)
-print("Loaded tokenizer!")
-s3_resource = boto3.resource('s3')
-bucket_name = 'macs123-deployment'
-prefix = 'personality_model/'
-
-local_dir = '/tmp/personality_model/'
-os.makedirs(local_dir, exist_ok=True)
-bucket_resource = s3_resource.Bucket(bucket_name)
-objects_under_prefix = bucket_resource.objects.filter(Prefix=prefix)
-for obj in objects_under_prefix:
-    key = obj.key
-    filename = os.path.join(local_dir, os.path.basename(key))
-    s3_client.download_file(bucket_name, key, filename)
-    print(f"Downloaded {key} to {filename}")
-
-model = BertForSequenceClassification.from_pretrained(local_dir)
-print("Loaded model!")
-# Iterate over the objects and print their keys
-for obj in objects_under_prefix:
-    key = obj.key
-    filename = os.path.join(local_dir, os.path.basename(key))
-    s3_client.download_file(bucket_name, key, filename)
-    print(f"Downloaded {key} to {filename}")
-
-# Define the personality detection function
-def personality_detection(text):
-    #tokenizer = BertTokenizer.from_pretrained("Minej/bert-base-personality")
-    model = BertForSequenceClassification.from_pretrained("Minej/bert-base-personality")
-    inputs = tokenizer(text, truncation=True, padding=True, return_tensors="pt")
-    outputs = model(**inputs)
-    predictions = outputs.logits.squeeze().detach().numpy()
-    label_names = ['Extroversion', 'Neuroticism', 'Agreeableness', 'Conscientiousness', 'Openness']
-    result = {label_names[i]: predictions[i] for i in range(len(label_names))}
-    return result
-
+import json
+import requests
 
 def lambda_handler(event, context):
-    results = []
-    for chunk in event['chunks']:
-        text = chunk.replace('\n', ' ')
-        results.append(personality_detection(text))
-    return results
+    base_url = "http://ec2-35-153-52-203.compute-1.amazonaws.com:5000"
 
-'''
-{
-  "chunks": ["test1" , "test2"]
-}
-'''  
+    try:
+        # Parse the incoming event as JSON
+        data = event
+        # Determine which endpoint to call based on the presence of 'chunks' or 'chunk' in the data
+        if 'chunks' in data:
+            url = f"{base_url}/detect_personality_chunks"
+            payload = {
+                "chunks": data['chunks']
+            }
+        elif 'chunk' in data:
+            url = f"{base_url}/detect_personality"
+            payload = {
+                "chunk": data['chunk']
+            }
+        else:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'Invalid input format. Expected "chunks" or "chunk" key.'})
+            }
+        
+        # Make the POST request to the determined URL
+        response = requests.post(url, json=payload)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        # Return the response from the API
+        return {
+            'statusCode': response.status_code,
+            'body': json.dumps(response.json())
+        }
+
+    except requests.exceptions.RequestException as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+
+    except json.JSONDecodeError:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'Invalid JSON format in request body.'})
+        }
+
+    except KeyError:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'Invalid input format. Expected "body" key in event.'})
+        }
