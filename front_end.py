@@ -1,20 +1,14 @@
-import nltk
-import streamlit as st
-import PyPDF2
-from ebooklib import epub
-from bs4 import BeautifulSoup
-from nltk.tokenize import word_tokenize
-import mysql.connector
-import boto3
-import logging
 import json
 import time
-import math
-import logging
 from datetime import datetime
-
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
+import PyPDF2
+import boto3
+import mysql.connector
+import nltk
+import streamlit as st
+from bs4 import BeautifulSoup
+from ebooklib import epub
+from nltk.tokenize import word_tokenize
 
 # Initialize clients
 s3 = boto3.client('s3')
@@ -32,7 +26,6 @@ config = {
 # Download the punkt tokenizer
 nltk.download('punkt')
 
-
 # Function to read PDF
 def read_pdf(file):
     reader = PyPDF2.PdfReader(file)
@@ -49,6 +42,7 @@ def read_txt(file):
     all_text = file.read().decode('utf-8')
     return all_text
 
+
 # Function to read EPUB
 def read_epub(file):
     book = epub.read_epub(file)
@@ -58,6 +52,7 @@ def read_epub(file):
             soup = BeautifulSoup(item.get_body_content(), 'html.parser')
             all_text += soup.get_text() + ' '
     return all_text
+
 
 # Function to convert text to tokens and save to S3
 def text_to_tokens(text, book_name):
@@ -86,33 +81,23 @@ def document_to_tokens(file, file_extension, book_name):
     return text_to_tokens(text, book_name)
 
 
-# Define the personality detection function using AWS Lambda
-logging.basicConfig(level=logging.INFO)
-
 def personality_detection(chunks):
-    # Ensure the chunks are divided into 10 portions
-    # chunk_size = math.ceil(len(chunks) / 10)
-    # chunked_chunks = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
-
     def divide_payloads(url_list, chunks):
         chunk_size = (len(url_list) + chunks - 1) // chunks
-        return [{'chunks': url_list[i * chunk_size:(i + 1) * chunk_size]} for i in
+        return [{'chunks': url_list[i * chunk_size:(i + 1) * chunk_size]} for i
+                in
                 range(chunks)]
 
     chunked_chunks = divide_payloads(chunks, 10)
 
-    # Log the chunked_chunks for debugging
-    # logging.info(f"Chunked chunks: {chunked_chunks}")
-
     sfn = boto3.client('stepfunctions')
     response = sfn.list_state_machines()
-    state_machine_arn = [sm['stateMachineArn'] for sm in response['stateMachines'] if sm['name'] == 'personalities-state-machine'][0]
+    state_machine_arn = \
+    [sm['stateMachineArn'] for sm in response['stateMachines'] if
+     sm['name'] == 'personalities-state-machine'][0]
 
     # Prepare input payload for Step Functions state machine
     input_payload = chunked_chunks
-
-    # Log the input payload for debugging
-    # logging.info(f"Input payload: {json.dumps(input_payload, indent=2)}")
 
     # Start synchronous execution for Express Workflow
     try:
@@ -122,7 +107,6 @@ def personality_detection(chunks):
             input=json.dumps(input_payload)
         )
     except Exception as e:
-        logging.error(f"Error starting execution: {e}")
         raise
 
     # Convert datetime objects to strings for logging
@@ -131,16 +115,13 @@ def personality_detection(chunks):
             return obj.isoformat()
         raise TypeError("Type not serializable")
 
-    # logging.info(f"Start response: {json.dumps(start_response, default=convert_datetime, indent=2)}")
-
     # Check for the output
     if start_response['status'] == 'SUCCEEDED':
         output = json.loads(start_response['output'])
-        # logging.info(f"Execution output: {json.dumps(output, indent=2)}")
         return output
     else:
-        logging.error(f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
-        raise Exception(f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
+        raise Exception(
+            f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
 
 
 def check_database(person_name, book_name):
@@ -203,10 +184,8 @@ def insert_into_database(person_name, book_name, scores):
     except Error as e:
         st.error(f"Failed to insert data into database: {e}")
 
-def compute_averages(results):
-    results = [entry for item in results for entry in
-                        json.loads(item['body'])]
 
+def compute_averages(results):
     sums = {trait: 0 for trait in results[0]}
     for person in results:
         for trait in person:
@@ -214,6 +193,7 @@ def compute_averages(results):
     averages = {trait: sum_val / len(results) for trait, sum_val in
                 sums.items()}
     return averages
+
 
 # Streamlit app interface
 st.title('Personality Detection from Autobiographies')
@@ -251,11 +231,13 @@ if person_name and book_name:
 
             # Sum and average the results
             if results:
-                print(results)
                 # if results is a json object
                 if isinstance(results, dict):
                     averages = results
                 else:
+                    # extract the results from the json object
+                    results = [entry for item in results for entry in
+                               json.loads(item['body'])]
                     averages = compute_averages(results)
                 st.write("Computed Personality Scores:")
                 st.json(averages)
