@@ -1,7 +1,7 @@
-## <p align="center">Personalities from Biographies</p>
+# <p align="center">Personalities from Biographies</p>
 
 **<p align="center">Muhua Huang, Max Zhu</p>**
-**Abstract**
+## Abstract
 
 Our project aims to use computational techniques to explore the Big Five personalities of historical and public figures
 through
@@ -9,7 +9,7 @@ their biographies. We will employ
 the [HuggingFace personality detection API](https://huggingface.co/Minej/bert-base-personality)
 to extract Big Five personality scores from biographical texts. This approach will provide a novel, quantitative measure to examine the personalities of notable individuals, assisting social scientists in understanding their behaviors and impacts within their respective contexts. The application supports input in PDF, TXT, and EPUB formats. While it is recommended to upload autobiographies for better interpretability, the system can process any document that meets the file type requirements.
 
-**Social Science Significance**
+## Social Science Significance
 
 The personalities of public figures often remain enigmatic despite their profound influence on history and culture. By
 quantifying personality traits from autobiographies, we can offer social scientists a tool to decode complex behaviors
@@ -34,7 +34,7 @@ allows for cross-cultural comparisons and the identification of universal traits
 and influence. The ability to analyze personalities on a large scale provides valuable data for constructing theories
 about the impact of personality on historical events and cultural trends.
 
-**Justification for Using Scalable Computing Methods**
+## Justification for Using Scalable Computing Methods
 
 The scale of biographical data available for analysis is vast, encompassing thousands of texts spanning various
 historical periods and cultures. Manual analysis of such a volume of data is impractical and time-consuming. Therefore,
@@ -44,7 +44,7 @@ data extraction and analysis. Additionally, HPC enables the handling of large da
 comprehensive and inclusive of diverse sources. By employing scalable computing methods, we can ensure the robustness
 and reliability of our findings, making them more applicable and valuable to social science research.
 
-**Methodology and High-Performance Computing Strategy**:
+## Methodology and High-Performance Computing Strategy:
 
 1. Parallel Processing: To handle the large volume of biographical texts, we will utilize parallel processing
    techniques.
@@ -63,9 +63,11 @@ and reliability of our findings, making them more applicable and valuable to soc
    efficient. Additionally, we will store the raw text files in `Amazon S3` for record-keeping and backup purposes. This
    dual approach ensures data integrity and accessibility while maintaining the scalability of the system.
 
-4. User Interface: To facilitate user interaction with the data, we will develop a frontend dashboard hosted on an AWS
-   `EC2 server`. The dashboard will be built using streamlit, a framework that allows for the rapid development of
-   interactive web applications. This user-friendly interface will enable multiple users to access the service
-   simultaneously, explore the data, and gain insights from the personality analysis. The real-time interaction
-   capability of the dashboard will enhance the usability and accessibility of the system, making it a valuable tool for
-   social scientists and researchers.
+4. User Interface: 
+   - To facilitate user interaction with the data, we developed a frontend dashboard using `streamlit' a
+      Python library that allows for the rapid development of interactive web applications.
+   - The `frontend` is deployed on `Streamlit Cloud`, allowing our app to be publicly accessible and allowing multiple 
+   users to access the service simultaneously.
+
+## References
+1. John, O. P., Donahue, E. M., & Kentle, R. L. (1991). Big five inventory. Journal of Personality and Social Psychology.
