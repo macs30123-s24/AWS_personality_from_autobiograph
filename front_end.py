@@ -13,23 +13,11 @@ from ebooklib import epub
 from nltk.tokenize import word_tokenize
 
 session = boto3.Session(
-    aws_access_key_id='ASIA2ZI247HFF4QQZINB',
-    aws_secret_access_key='K0BzzRTwMjUfSgjOFjkjeTn3tzoY2stLLLjL23wz',
+    aws_access_key_id='ASIA2ZI247HFJ7BAM35P',
+    aws_secret_access_key='icpghRCr+oxhboXDs8B5NPOechKJPTErs5ZijkX7',
     region_name='us-east-1',
-    aws_session_token='IQoJb3JpZ2luX2VjEPP//////////wEaCXVzLXdlc3QtMiJHMEUCIQDRo'
-                      'iSqmOQbd4Q/BchaqbjqHS94Ey3E9JLIdwgg96m+nQIgPbBPY4Q02dMad/'
-                      '2VlGO5EUiWGRx4VAQffJCK8egbdswqpwIIbBAAGgw3NDE0NzUxNTQzNzg'
-                      'iDOVW8gKZ6PU6OxsmZiqEAtME5GqvwCkNWrEMAvLzss2rJB9EV5Fcl9Bn'
-                      'iC0mnhIwJt9rCKmV+qUUAVH+SIAthwBX0zAyJeQtlr/rNYwOWkOF0+734'
-                      'ZRYF80nt3I6/pLVpv0DrdJVbfGz74mkWC/OFKpO4vSWfC19Ar3FtH3BJw'
-                      'm4GY6kjJKddcB64K+5Ja17AV1NnKtwXBp4QXAwrDrrPtqw26K7AuB+5Z6'
-                      'tqc8ubHLjT+Q9BlEguZbtTKp30YbG1sX4wcH35/wubQ3KlZfoU203eQbC'
-                      'ycPu6P8cubr1pu3U0mHf0PwiKJCet8Hb5hpABSZfhOH3kEIYvxh/JcL10'
-                      'yvHWUPlinI0xcKjpMU4mSIR/dxgMLjlurIGOp0B7wFa9NDITW6jhjiFmd'
-                      'P43EXIUhMuQExSP6SYQEGM8i5s/Dj+DgqcdkyqGdHvdnDlUF5MEGhewqC'
-                      'cwsS0hk/1iKaVG0gOx9xs6m31XwhBAH0sozboeFTsqQ7zon75lsefm5pu'
-                      'CB+RAbwkqK1uUNpXqQAyXIe4FE6+NDCkD0x7XguOkU9sZ9B1ZoWvXHyuO'
-                      '3yMq/i++zK0EdbAinulOw==')
+    aws_session_token='IQoJb3JpZ2luX2VjEAEaCXVzLXdlc3QtMiJIMEYCIQDET8iH9'
+                      '+p8rfacYbEaaQPP8xLi1V23dSKze7WSOnHPcgIhAI28n7FBNPoPS2R0yZMOisilEjTBtadx3U5Y7kZJ8G5fKqcCCHoQABoMNzQxNDc1MTU0Mzc4IgzebvyMTkUe3+6GiswqhAIxn6JBsy/wSraO0CaFyn1ykZmLXa2TR1naRGufr2i2l/Zo/c1keq3UuKYpBiaKVx+1ty5Y81RDrzqWGLG6fr0Dl8bZyAYJP0qoFzFXCNV4rbcs7EpAuw8KBuJQ7qV3N8mlLVz2/3KBpUaVouMridbw0W6kuJFgunAS/b1cEG6Aray1GA3uCIcbdFaVyozEW/m33RRpelD/sb1D4Qt0+fbalySdxg6xTDGW/hN8QSwAhq+xrauf75TxTMI53cDs5dGC7j5jT4sFom3A50/MYoBGXF3LC9fuCaHZp2ff6un+JH9h/wh+pWlJdwhMYWDSXVhL8iLsXTJpaxNK4HTNJ1nV+NISLzD74b2yBjqcAeIun5157k3SHYTcZ6cHCIDWJFTGGPoabE2tzOE85q8T6G+3mDpYB/Pc4w3PvkE6k3CG1GUbEf5wraAF0W2JtJmgsHacoAJNBh4tJGKLGpH+TkCSLBMgsLiHdIhlDGvjYH3OCZQ05R/5DJxLifoFOCQVXtUnQFcK8OLzLZyykLeH9vFyaXr4eurtMZOBpte7CCMOeO0GTxRjV9vjCg==')
 
 s3 = session.client('s3')
 
