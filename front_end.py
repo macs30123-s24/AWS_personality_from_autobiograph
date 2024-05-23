@@ -10,9 +10,15 @@ from bs4 import BeautifulSoup
 from ebooklib import epub
 from nltk.tokenize import word_tokenize
 
-# Initialize clients
-s3 = boto3.client('s3')
-lambda_client = boto3.client('lambda')
+session = boto3.Session(
+    aws_access_key_id='ASIA2ZI247HFF4QQZINB',
+    aws_secret_access_key='K0BzzRTwMjUfSgjOFjkjeTn3tzoY2stLLLjL23wz',
+    region_name='us-east-1'
+)
+
+s3 = session.client('s3')
+
+lambda_client = session.client('lambda')
 
 # Database connection configuration using environment variables
 config = {
