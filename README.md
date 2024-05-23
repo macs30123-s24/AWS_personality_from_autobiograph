@@ -6,7 +6,7 @@
 Our project aims to create a web application designed to extract  Big Five personality traits from historical biographical texts provided by users. We use Streamlit for an intuitive frontend interface and AWS services (EC2, S3, RDS, EB) for a scalable and reliable backend infrastructure. We will employ the [HuggingFace personality detection API](https://huggingface.co/Minej/bert-base-personality) to extract Big Five personality scores from biographical texts. This approach will provide a novel, quantitative measure to examine the personalities of notable individuals, assisting social scientists in understanding their behaviors and impacts within their respective contexts. The application supports input in PDF, TXT, and EPUB formats. While it is recommended to upload autobiographies for better interpretability, the system can process any document that meets the file type requirements.
 
 
-## Social Science Significance
+## Features Overview
 
 > **Note** : Due to the 4-hour session limit of AWS Academy, the backend service is not 24/7 available. 
 
@@ -22,9 +22,6 @@ Analyzing personality traits from autobiographies offers social scientists a too
 ## Justification for Using Scalable Computing Methods
 
 The scale of biographical data available for analysis could be vast, encompassing thousands of texts from various historical periods and cultures. Manual analysis of such a volume of data is impractical and time-consuming. Therefore, leveraging scalable computing methods is crucial for processing and analyzing these texts. High-performance computing (HPC) and cloud-based resources allow for the parallel processing of multiple texts and user interactions, reducing the latency in data extraction and analysis. Additionally, HPC enables the analysis of large datasets.
-
-**Methodology and Architecture**:
-
 
 ## Methodology and High-Performance Computing Strategy:
 1. Parallel Processing: To handle the large volume of biographical texts, we will utilize parallel processing in AWS. There are two components:
@@ -45,6 +42,8 @@ The scale of biographical data available for analysis could be vast, encompassin
       Python library that allows for the rapid development of interactive web applications.
    - The `frontend` is deployed on `Streamlit Cloud`, allowing our app to be publicly accessible and allowing multiple 
    users to access the service simultaneously.
+   - Public access link: [Personalities from Biographies](https://autobiographypersonality-a4aj4cqoph3wjksiopgbhw.streamlit.app)
+   - > **Note** : The web server is limited by the 4-hour session limit of AWS Academy. 
 
 ## References
 1. John, O. P., Donahue, E. M., & Kentle, R. L. (1991). Big five inventory. Journal of Personality and Social Psychology.
