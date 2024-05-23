@@ -4,6 +4,11 @@ from flask import Flask, request, jsonify
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 import boto3
+from download_model import init_model, init_tokenizer
+
+# Initialize the model and tokenizer
+init_model()
+init_tokenizer()
 
 app = Flask(__name__)
 application = app
@@ -25,8 +30,8 @@ bucket_name = 'macs123-deployment'
 logging.info("Loaded modules!")
 
 # Load the tokenizer and model
-tokenizer_dir = '/tmp/personality_tokenizer/'
-model_dir = '/tmp/personality_model/'
+tokenizer_dir = 'personality_tokenizer/'
+model_dir = 'personality_model/'
 
 if os.path.exists(tokenizer_dir):
     logging.info("Tokenizer directory exists. Contents:")
@@ -104,4 +109,4 @@ def detect_personality_one_chunk():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    application.run(host='0.0.0.0', port=5000)
