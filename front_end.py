@@ -1,23 +1,18 @@
+import json
+import time
+from datetime import datetime
+import PyPDF2
+import boto3
+import mysql.connector
 import nltk
 import streamlit as st
-from transformers import BertTokenizer, BertForSequenceClassification
-import PyPDF2
-from ebooklib import epub
 from bs4 import BeautifulSoup
+from ebooklib import epub
 from nltk.tokenize import word_tokenize
-import mysql.connector
-from mysql.connector import Error
-import boto3
-import logging
-
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
 
 # Initialize clients
-s3 = boto3.client('s3',
-    aws_access_key_id='ASIA2ZI247HFDDGW7UWM',
-    aws_secret_access_key='wO2znPY02CTb11c2vS9D13H+otD1Q2MV3fT0aVpX',
-    region_name='us-east-1')
+s3 = boto3.client('s3')
+lambda_client = boto3.client('lambda')
 
 # Database connection configuration using environment variables
 config = {
@@ -30,7 +25,6 @@ config = {
 
 # Download the punkt tokenizer
 nltk.download('punkt')
-
 
 # Function to read PDF
 def read_pdf(file):
@@ -48,6 +42,7 @@ def read_txt(file):
     all_text = file.read().decode('utf-8')
     return all_text
 
+
 # Function to read EPUB
 def read_epub(file):
     book = epub.read_epub(file)
@@ -57,6 +52,7 @@ def read_epub(file):
             soup = BeautifulSoup(item.get_body_content(), 'html.parser')
             all_text += soup.get_text() + ' '
     return all_text
+
 
 # Function to convert text to tokens and save to S3
 def text_to_tokens(text, book_name):
@@ -85,18 +81,47 @@ def document_to_tokens(file, file_extension, book_name):
     return text_to_tokens(text, book_name)
 
 
-# Define the personality detection function
-def personality_detection(text):
-    tokenizer = BertTokenizer.from_pretrained("Minej/bert-base-personality")
-    model = BertForSequenceClassification.from_pretrained(
-        "Minej/bert-base-personality")
-    inputs = tokenizer(text, truncation=True, padding=True, return_tensors="pt")
-    outputs = model(**inputs)
-    predictions = outputs.logits.squeeze().detach().numpy()
-    label_names = ['Extroversion', 'Neuroticism', 'Agreeableness',
-                   'Conscientiousness', 'Openness']
-    result = {label_names[i]: predictions[i] for i in range(len(label_names))}
-    return result
+def personality_detection(chunks):
+    def divide_payloads(url_list, chunks):
+        chunk_size = (len(url_list) + chunks - 1) // chunks
+        return [{'chunks': url_list[i * chunk_size:(i + 1) * chunk_size]} for i
+                in
+                range(chunks)]
+
+    chunked_chunks = divide_payloads(chunks, 10)
+
+    sfn = boto3.client('stepfunctions')
+    response = sfn.list_state_machines()
+    state_machine_arn = \
+    [sm['stateMachineArn'] for sm in response['stateMachines'] if
+     sm['name'] == 'personalities-state-machine'][0]
+
+    # Prepare input payload for Step Functions state machine
+    input_payload = chunked_chunks
+
+    # Start synchronous execution for Express Workflow
+    try:
+        start_response = sfn.start_sync_execution(
+            stateMachineArn=state_machine_arn,
+            name=f'q2_sync_execution_{int(time.time())}',
+            input=json.dumps(input_payload)
+        )
+    except Exception as e:
+        raise
+
+    # Convert datetime objects to strings for logging
+    def convert_datetime(obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError("Type not serializable")
+
+    # Check for the output
+    if start_response['status'] == 'SUCCEEDED':
+        output = json.loads(start_response['output'])
+        return output
+    else:
+        raise Exception(
+            f"Step function execution failed: {json.dumps(start_response, default=convert_datetime, indent=2)}")
 
 
 def check_database(person_name, book_name):
@@ -159,14 +184,16 @@ def insert_into_database(person_name, book_name, scores):
     except Error as e:
         st.error(f"Failed to insert data into database: {e}")
 
+
 def compute_averages(results):
     sums = {trait: 0 for trait in results[0]}
     for person in results:
         for trait in person:
-            sums[trait] += person[trait]
+            sums[trait] += float(person[trait])
     averages = {trait: sum_val / len(results) for trait, sum_val in
                 sums.items()}
     return averages
+
 
 # Streamlit app interface
 st.title('Personality Detection from Autobiographies')
@@ -200,13 +227,18 @@ if person_name and book_name:
             else:
                 chunks = st.session_state.chunks
 
-            results = []
-            for chunk in chunks:
-                results.append(personality_detection(chunk))
+            results = personality_detection(chunks)
 
             # Sum and average the results
             if results:
-                averages = compute_averages(results)
+                # if results is a json object
+                if isinstance(results, dict):
+                    averages = results
+                else:
+                    # extract the results from the json object
+                    results = [entry for item in results for entry in
+                               json.loads(item['body'])]
+                    averages = compute_averages(results)
                 st.write("Computed Personality Scores:")
                 st.json(averages)
                 # Insert results into the database
