@@ -34,16 +34,14 @@ The scale of biographical data available for analysis could be vast, encompassin
 
 2. User Interface: To facilitate user interaction with the data, we will develop a frontend dashboard hosted on an AWS `EC2 server`. The dashboard will use Streamlit, a framework that allows for the rapid development of interactive web applications. This user-friendly interface will enable multiple users to access the service simultaneously, explore the data, and gain insights from the personality analysis. The real-time interaction capability of the dashboard will enhance the usability and accessibility of the system, making it a valuable tool for social scientists.
 
-3. Result Aggregation: We will implement different aggregation strategies based on the size of the input data. For small datasets, `serial processing` will be sufficient. However, for larger datasets, we will use numba, a just-in-time compiler for Python, to parallelize the processing tasks. This will enhance the performance of our computations, allowing us to handle larger volumes of data more efficiently.
-
-4. Data Management: Effective data management is essential for the success of our project. We will store the extracted
+3. Data Management: Effective data management is essential for the success of our project. We will store the extracted
    personality data, along with the corresponding book titles and names of the individuals, in a `relational database
    system (RDS)`. This approach will prevent redundant computations and streamline data retrieval, making the system more
    efficient. Additionally, we will store the raw text files in `Amazon S3` for record-keeping and backup purposes. This
    dual approach ensures data integrity and accessibility while maintaining the scalability of the system.
 
-5. User Interface: 
-   - To facilitate user interaction with the data, we developed a frontend dashboard using `streamlit' a
+4. User Interface: 
+   - To facilitate user interaction with the data, we developed a frontend dashboard using `streamlit` a
       Python library that allows for the rapid development of interactive web applications.
    - The `frontend` is deployed on `Streamlit Cloud`, allowing our app to be publicly accessible and allowing multiple 
    users to access the service simultaneously.
