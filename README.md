@@ -20,7 +20,7 @@ requirements.
 
 - Text Input: Users can input text documents through the Streamlit frontend, which is deployed online and can be
   accessed here: [Personalities from Biographies](https://autobiographypersonality-a4aj4cqoph3wjksiopgbhw.streamlit.app/)
-- Personality Traits Extraction: The scalable backend utilizes a transformer model to extract personality traits from
+- Personality Traits Extraction: The scalable backend service utilizes a transformer model to extract personality traits from
   the provided text inputs.
 - Storage: User inputs are stored in Amazon S3 for persistence and retrieval.
 - Data Analysis: Extracted personality traits for each historical figure are stored in Amazon RDS for further analysis
@@ -61,13 +61,13 @@ efficiently extracting personality traits from biographical texts.
     - We divide each input text into 10 chunks and deploy a `step function` in AWS to map 10 `Lambda workers` onto the
       workloads concurrently. By distributing the workloads across multiple processes, we can achieve speed-ups in data
       processing and reduce the overall time required for processing.
-    - Each Lambda worker communicates with the Backend service. Currently, we use a single instance of `EC2` to host the
+    - Each Lambda worker communicates with the Backend service. Currently, we use a single 2-worker `t2` instance of `EC2` to host the
       service using `Gunicorn` and `systemd`. Gunicorn is a **WSGI** HTTP server capable of handling multiple worker
       processes efficiently, which allows it to leverage the multi-cores and serve concurrent incoming requests. `systemd` allows the
       service to auto-restart each time the instance is rebooted, unified logging, and status monitoring
     - We have written the deployment code for `Elastic Beanstalk` (EB), which allows us to autoscale `EC2` instances
       depending on user volume. However, due to the authorization restraint of the AWS Academy account, we have yet to
-      initialize an Elastic Beanstalk (EB) application.
+      initialize an Elastic Beanstalk (EB) application. With a personal account, it should be able to autoscale to multiple `t2` instances.
 
 2. User Interface: To facilitate user interaction with the data, we will develop a frontend dashboard hosted on an
    AWS `EC2 server`. The dashboard will use Streamlit, a framework that allows for the rapid development of interactive
