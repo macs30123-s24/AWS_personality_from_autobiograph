@@ -19,13 +19,15 @@ requirements.
 > **Note** : Due to the 4-hour session limit of AWS Academy, the backend service is not 24/7 available.
 
 - Text Input: Users can input text documents through the Streamlit frontend, which is deployed online and can be
-  accessed
-  here: [Personalities from Biographies](https://autobiographypersonality-a4aj4cqoph3wjksiopgbhw.streamlit.app/)
+  accessed here: [Personalities from Biographies](https://autobiographypersonality-a4aj4cqoph3wjksiopgbhw.streamlit.app/)
 - Personality Traits Extraction: The scalable backend utilizes a transformer model to extract personality traits from
   the provided text inputs.
 - Storage: User inputs are stored in Amazon S3 for persistence and retrieval.
 - Data Analysis: Extracted personality traits for each historical figure are stored in Amazon RDS for further analysis
   and insights.
+
+![Workflow](flow.png)
+
 
 ## Social Science Significance
 
@@ -77,8 +79,7 @@ efficiently extracting personality traits from biographical texts.
 3. Data Management: Effective data management is essential for the success of our project. We will store the extracted
    personality data, along with the corresponding book titles and names of the individuals, in a `relational database
    system (RDS)`. This approach will prevent redundant computations and streamline data retrieval, making the system
-   more
-   efficient. Additionally, we will store the raw text files in `Amazon S3` for record-keeping and backup purposes. This
+   more   efficient. Additionally, we will store the raw text files in `Amazon S3` for record-keeping and backup purposes. This
    dual approach ensures data integrity and accessibility while maintaining the scalability of the system.
 
 4. User Interface:
