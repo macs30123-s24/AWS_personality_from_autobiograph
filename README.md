@@ -56,15 +56,15 @@ efficiently extracting personality traits from biographical texts.
 
 ## Methodology and High-Performance Computing Strategy:
 
-1. Parallel Processing: To handle the large volume of biographical texts, we will utilize parallel processing in AWS.
+1. Parallel Processing: To handle the large volume of biographical texts, we will utilize parallel processing in the AWS Backend.
    There are two components:
     - We divide each input text into 10 chunks and deploy a `step function` in AWS to map 10 `Lambda workers` onto the
       workloads concurrently. By distributing the workloads across multiple processes, we can achieve speed-ups in data
       processing and reduce the overall time required for processing.
     - Each Lambda worker communicates with the Backend service. Currently, we use a single instance of `EC2` to host the
-      service using `Gunicorn` and `systemd`. Gunicorn is a WSGI HTTP server capable of handling multiple worker
-      processes, which allows it to leverage multi-cores and serve concurrent incoming requests. `systemd` allows the
-      service to auto-restart each time the instance is rebooted.
+      service using `Gunicorn` and `systemd`. Gunicorn is a **WSGI** HTTP server capable of handling multiple worker
+      processes efficiently, which allows it to leverage the multi-cores and serve concurrent incoming requests. `systemd` allows the
+      service to auto-restart each time the instance is rebooted, unified logging, and status monitoring
     - We have written the deployment code for `Elastic Beanstalk` (EB), which allows us to autoscale `EC2` instances
       depending on user volume. However, due to the authorization restraint of the AWS Academy account, we have yet to
       initialize an Elastic Beanstalk (EB) application.
