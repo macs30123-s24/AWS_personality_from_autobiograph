@@ -91,6 +91,11 @@ efficiently extracting personality traits from biographical texts.
       link: [Personalities from Biographies](https://autobiographypersonality-a4aj4cqoph3wjksiopgbhw.streamlit.app)
     - > **Note** : The web server is limited by the 4-hour session limit of AWS Academy.
 
+**Note** : **For the result aggregation (computing the average), we didn't employ parallel computing techniques** such as `numba`. This is due to the consideration that
+the aggregation tend to involve a few hunderds of entries, which can be processed very quickly be CPU. In such a case, using HPC techniques seem to be an overkill, in
+addition to the overhead created by its set up. 
+   
+
 ## References
 
 1. John, O. P., Donahue, E. M., & Kentle, R. L. (1991). Big five inventory. Journal of Personality and Social
